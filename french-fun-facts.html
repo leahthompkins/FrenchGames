@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<!-- saved from url=(0070)https://ds-pqj2bnep-%2D8082.us-west-2.prod.proxy.devspaces.amazon.dev/ -->
+<html lang="en"><script src="chrome-extension://bkbighdlgofgdhcjnhocalbkiehhpdei/sentryjs-api-injected.js" id="sentryjs-api-injected"></script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>French Fun Facts</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fff; color: #222; user-select: none; -webkit-user-select: none;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  button { font: inherit; cursor: pointer; border: none; }
+  /* Every screen fits the window exactly: no scrolling (sizes scale with screen height) */
+  .screen { display: none; height: 100vh; height: 100dvh; flex-direction: column; align-items: center; padding: 2.5vh 3vw; overflow-y: auto; }
+  /* Centered when there is room; never pushed above the top edge when there isn't */
+  .center { margin: auto 0; width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .screen.active { display: flex; }
+  .flag { display: flex; width: 6vh; height: 4vh; border: 1px solid #ccc; flex: none; }
+  .flag div { flex: 1; }
+
+  /* Home */
+  #home h1 { font-size: clamp(30px, 6.5vh, 60px); margin: 1.5vh 0 0.5vh; text-align: center; }
+  #home .sub { font-size: clamp(18px, 3vh, 28px); color: #555; margin-bottom: 3vh; text-align: center; }
+  #cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5vh; width: min(1150px, 100%); }
+  .cat {
+    color: #fff; border-radius: 22px; padding: 1.5vh 12px; height: min(26vh, 20vw);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1vh;
+    font-size: clamp(20px, 3.8vh, 34px); font-weight: 800; box-shadow: 0 6px 0 #0002; transition: transform .1s;
+  }
+  .cat:active { transform: translateY(4px); box-shadow: 0 2px 0 #0002; }
+  .cat .emoji { font-size: clamp(40px, 9vh, 90px); line-height: 1; }
+
+  /* Question */
+  .topbar { width: min(1150px, 100%); display: flex; align-items: center; gap: 16px; flex: none; }
+  .back { background: #eee; color: #222; font-size: clamp(17px, 2.6vh, 24px); font-weight: 700; padding: 1.3vh 22px; border-radius: 14px; }
+  .topbar .name { font-size: clamp(20px, 3.2vh, 28px); font-weight: 800; flex: 1; text-align: center; }
+  .count { font-size: clamp(16px, 2.4vh, 22px); color: #555; min-width: 70px; text-align: right; }
+  .dots { display: flex; gap: 8px; margin: 1.5vh 0; flex: none; }
+  .dots span { width: 1.6vh; height: 1.6vh; min-width: 10px; min-height: 10px; border-radius: 50%; background: #ddd; }
+  .dots span.done { background: var(--c); }
+  .dots span.now { background: var(--c); outline: 3px solid #0003; }
+
+  .card { margin: auto 0; width: min(1150px, 100%); display: grid; grid-template-columns: 1fr; align-items: center; gap: 3vh; }
+  .left { display: flex; flex-direction: column; gap: 2.5vh; }
+  .question { font-size: clamp(22px, 5vh, 44px); font-weight: 700; text-align: center; line-height: 1.25; }
+  #answers { display: flex; flex-direction: column; gap: 2vh; width: 100%; }
+  .ans {
+    font-size: clamp(18px, 3.8vh, 34px); font-weight: 700; padding: 2.2vh 16px; border-radius: 18px; width: 100%;
+    background: #fff; color: #222; border: 4px solid var(--c);
+  }
+  .ans.right { background: #2e9e4f; border-color: #2e9e4f; color: #fff; }
+  .ans.wrong { background: #e15b5b; border-color: #e15b5b; color: #fff; }
+  .ans.faded { opacity: .35; }
+  #answers.locked .ans { cursor: default; }
+
+  /* After answering: answers shrink, "Learn more" appears beside them (landscape) or below (portrait) */
+  .card.answered .left { gap: 1.6vh; }
+  .card.answered .question { font-size: clamp(18px, 3.4vh, 32px); }
+  .card.answered #answers { gap: 1.2vh; }
+  .card.answered .ans { font-size: clamp(16px, 2.7vh, 26px); padding: 1.3vh 14px; }
+  @media (orientation: landscape) {
+    .card.answered { grid-template-columns: 1fr 1.15fr; gap: 3vw; }
+  }
+  #reveal { display: none; background: #f6f9ff; border: 3px solid var(--c); border-radius: 20px; padding: 2.2vh 24px; }
+  .card.answered #reveal { display: block; }
+  #verdict { font-size: clamp(19px, 3.4vh, 30px); font-weight: 800; margin-bottom: 1vh; }
+  #more-title { font-size: clamp(15px, 2.4vh, 22px); font-weight: 700; color: #555; margin: 1vh 0 0.5vh; }
+  #more { margin: 0; padding-left: 26px; font-size: clamp(16px, 2.8vh, 25px); line-height: 1.4; }
+  #more li { margin-bottom: 0.8vh; }
+  .next { display: block; margin: 2vh auto 0; background: var(--c); color: #fff; font-size: clamp(20px, 3.6vh, 32px); font-weight: 800; padding: 1.8vh 44px; border-radius: 18px; }
+
+  /* Done */
+  #done { text-align: center; }
+  #done .center { gap: 3vh; }
+  #done .big { font-size: clamp(60px, 13vh, 110px); }
+  #done h2 { font-size: clamp(32px, 6vh, 48px); margin: 0; }
+  #done p { font-size: clamp(20px, 3.4vh, 28px); color: #555; margin: 0; }
+  #done button { background: #0055A4; color: #fff; font-size: clamp(22px, 4vh, 34px); font-weight: 800; padding: 2.4vh 52px; border-radius: 18px; }
+
+  @media (orientation: portrait) {
+    #cats { grid-template-columns: 1fr 1fr; }
+    .cat { height: min(19vh, 30vw); }
+    .question { font-size: clamp(22px, 3.6vh, 44px); }
+    .ans { font-size: clamp(18px, 2.9vh, 34px); }
+    .card.answered .question { font-size: clamp(18px, 2.7vh, 32px); }
+    .card.answered .ans { font-size: clamp(16px, 2.2vh, 26px); }
+    #more { font-size: clamp(16px, 2.3vh, 25px); }
+  }
+</style>
+<script id="fortidlp-file-access-api" src="chrome-extension://gbojkjpincgojijodbnliimgeggnomai/upload_fileaccessapi.js"></script><script id="fortidlp-input-element-creation" src="chrome-extension://gbojkjpincgojijodbnliimgeggnomai/upload_element_creation.js"></script></head>
+<body>
+
+<div id="home" class="screen active"><div class="center">
+  <div class="flag"><div style="background:#0055A4"></div><div style="background:#fff"></div><div style="background:#EF4135"></div></div>
+  <h1>French Fun Facts</h1>
+  <div class="sub">Pick a topic to explore!</div>
+  <div id="cats"><button class="cat" style="background: rgb(224, 133, 43);"><span class="emoji">🥐</span>Yummy Food</button><button class="cat" style="background: rgb(123, 82, 184);"><span class="emoji">🏰</span>Castles &amp; History</button><button class="cat" style="background: rgb(212, 160, 23);"><span class="emoji">💡</span>Inventions &amp; Science</button><button class="cat" style="background: rgb(43, 111, 198);"><span class="emoji">🗼</span>Places &amp; Records</button><button class="cat" style="background: rgb(46, 158, 79);"><span class="emoji">🎒</span>Life in France</button><button class="cat" style="background: rgb(214, 69, 122);"><span class="emoji">🤪</span>Weird &amp; Wonderful</button></div>
+</div></div>
+
+<div id="quiz" class="screen">
+  <div class="topbar">
+    <button class="back" id="back">← All topics</button>
+    <div class="name" id="cat-name"></div>
+    <div class="count" id="count"></div>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="card" id="card">
+    <div class="left">
+      <div class="question" id="question"></div>
+      <div id="answers"></div>
+    </div>
+    <div id="reveal">
+      <div id="verdict"></div>
+      <div id="more-title">Learn more:</div>
+      <ul id="more"></ul>
+      <button class="next" id="next">Next question →</button>
+    </div>
+  </div>
+</div>
+
+<div id="done" class="screen"><div class="center">
+  <div class="big" id="done-emoji">🎉</div>
+  <h2>Bravo!</h2>
+  <p id="done-text"></p>
+  <button id="done-btn">Choose another topic</button>
+</div></div>
+
+<script>
+// Each question: q = question, a = correct answer, w = two wrong answers,
+// more = a few short "learn more" facts shown after answering.
+const CATEGORIES = [
+  {
+    name: "Yummy Food", emoji: "🥐", color: "#e0852b",
+    questions: [
+      { q: "About how many different kinds of cheese are made in France?", a: "More than 1,000", w: ["About 100", "About 400"],
+        more: ["Famous French cheeses include Brie, Camembert and Roquefort.",
+               "Roquefort cheese must be aged in special caves in the south of France.",
+               "President Charles de Gaulle once joked: “How can anyone govern a country that has 246 kinds of cheese?”"] },
+      { q: "By French law, a “traditional” baguette may only contain flour, water, salt and…", a: "Yeast", w: ["Sugar", "Butter"],
+        more: ["This law was made in 1993 to protect the classic French baguette.",
+               "A typical baguette is about 65 cm (2 feet) long. French bakeries make billions every year.",
+               "In 2022, the baguette was added to UNESCO's list of the world's important cultural traditions."] },
+      { q: "The croissant was inspired by a bread from which country?", a: "Austria", w: ["Italy", "Belgium"],
+        more: ["It comes from an Austrian bread called the kipferl, from the city of Vienna.",
+               "That's why French bakeries call croissants and similar pastries “viennoiseries”: things from Vienna!",
+               "“Croissant” means “crescent,” like the shape of the moon."] },
+      { q: "Sparkling wine can only be called “Champagne” if…", a: "It comes from the Champagne region of France", w: ["It is made with French grapes", "It is more than 10 years old"],
+        more: ["Anything made somewhere else has to be called “sparkling wine” instead.",
+               "France protects the names of many local foods this way, including Roquefort cheese and Bresse chicken.",
+               "These rules help keep old recipes and traditions alive in the places they come from."] },
+      { q: "Which country also claims it invented French fries?", a: "Belgium", w: ["Spain", "The Netherlands"],
+        more: ["A Belgian legend says villagers fried little fish, and switched to potato strips when the river froze.",
+               "One story says American soldiers in World War I tasted fries in Belgium, where people speak French, and called them “French” fries.",
+               "Belgium even has a museum all about fries, in the city of Bruges!"] },
+      { q: "In January, French families share a “King Cake.” What is hidden inside?", a: "A tiny figurine", w: ["A gold ring", "An almond"],
+        more: ["Whoever finds the figurine becomes king or queen for the day!",
+               "The winner gets to wear a paper crown.",
+               "Long ago, a dried bean was hidden in the cake instead."] },
+      { q: "On February 2 (La Chandeleur), French families make crêpes. What do people hold for good luck while flipping them?", a: "A coin", w: ["A spoon", "A four-leaf clover"],
+        more: ["If you flip the crêpe and catch it in the pan, you're supposed to have good luck all year.",
+               "Crêpes come from Brittany, in the northwest of France.",
+               "Salty crêpes made with buckwheat flour are called galettes."] },
+      { q: "Snails (escargots) in France are usually cooked with…", a: "Garlic butter and parsley", w: ["Honey and mustard", "Tomato sauce"],
+        more: ["The most famous recipe comes from the Burgundy region.",
+               "People eat them with special tongs and a tiny two-pronged fork.",
+               "French people eat thousands of tons of snails every year, often at Christmas."] },
+      { q: "How long can the lunch break be at many French schools?", a: "Up to 2 hours", w: ["20 minutes", "45 minutes"],
+        more: ["School lunch often has courses: a starter, a main dish, cheese or yogurt, and dessert.",
+               "Soda machines are not allowed in French schools.",
+               "Ketchup is only allowed with certain foods, like French fries!"] },
+      { q: "Since 2016, what must big French supermarkets do with unsold food that's still good to eat?", a: "Give it to charities", w: ["Sell it at half price", "Send it back to the farms"],
+        more: ["France was the first country in the world to make a law like this.",
+               "Supermarkets are not allowed to throw away or ruin food that people could still eat.",
+               "The donated food helps feed millions of people every year."] },
+    ],
+  },
+  {
+    name: "Castles & History", emoji: "🏰", color: "#7b52b8",
+    questions: [
+      { q: "About how many castles and châteaux are there in France?", a: "About 45,000", w: ["About 5,000", "About 15,000"],
+        more: ["In French, “château” can mean a stone castle for defense or a fancy house in the countryside.",
+               "Most fighting castles were built in the Middle Ages, about 1,000 to 600 years ago, to protect the lord and control the land.",
+               "Later, in the 1500s, kings built beautiful palace-like châteaux, especially in the Loire Valley."] },
+      { q: "In many medieval castles, where did the toilets empty?", a: "Straight down into the moat or a ditch", w: ["Into underground sewer pipes", "Into a pit under the kitchen"],
+        more: ["The toilet was just a stone seat over a hole in the wall, called a “garderobe.”",
+               "People hung clothes near it because the smell was thought to keep moths away. That's where the word “wardrobe” comes from!",
+               "A famous legend says that in 1204, attackers sneaked into Château Gaillard by climbing up a toilet chute!"] },
+      { q: "A castle's strongest tower, where the lord often lived, was called the “donjon.” What English word comes from it?", a: "Dungeon", w: ["Dragon", "Dome"],
+        more: ["In French, “donjon” just means the big main tower, not a prison.",
+               "It was the last safe place to go if enemies got inside the walls.",
+               "Castles were also defended by moats, drawbridges and narrow slits for archers."] },
+      { q: "At about what age could a boy start training to become a knight?", a: "7", w: ["12", "16"],
+        more: ["At 7, a boy became a page and learned manners, riding and how to serve at the table.",
+               "At about 14, he became a squire and looked after a knight's armor, horse and weapons.",
+               "At about 21, he could be made a knight with a tap of a sword on his shoulder."] },
+      { q: "About how heavy was a full suit of knight's armor?", a: "About 25 kg (55 pounds)", w: ["About 10 kg (22 pounds)", "About 50 kg (110 pounds)"],
+        more: ["That's about as heavy as a 6-year-old child!",
+               "The weight was spread over the whole body, so knights could still run, climb and jump onto a horse.",
+               "Each suit was made to fit one person, a bit like metal clothes."] },
+      { q: "Carcassonne is a walled city from the Middle Ages. How many towers are on its walls?", a: "52", w: ["12", "25"],
+        more: ["Carcassonne has two rings of walls, about 3 km long.",
+               "In the 1800s it was falling apart, and an architect named Viollet-le-Duc rebuilt it.",
+               "A popular board game called Carcassonne is named after it."] },
+      { q: "About how old was Joan of Arc when she led the French army?", a: "About 17", w: ["About 13", "About 25"],
+        more: ["Joan was a farm girl who said saints spoke to her and told her to save France.",
+               "She wore armor, carried a banner and helped free the city of Orléans in 1429.",
+               "She is one of France's greatest heroes and a patron saint of France."] },
+      { q: "About how many rooms are in the Palace of Versailles?", a: "About 2,300", w: ["About 300", "About 800"],
+        more: ["King Louis XIV moved the whole royal court to Versailles in 1682.",
+               "Visitors could come and watch the king eat his dinner!",
+               "Its Hall of Mirrors has 357 mirrors. Back then, mirrors were a sign of great wealth."] },
+      { q: "France gave the Statue of Liberty to the USA in 1886. Who built the metal skeleton inside it?", a: "Gustave Eiffel", w: ["Thomas Edison", "Auguste Rodin"],
+        more: ["The statue was designed by French sculptor Frédéric-Auguste Bartholdi.",
+               "Gustave Eiffel is the same engineer whose company later built the Eiffel Tower.",
+               "It sailed to New York in 350 pieces packed in 214 crates. Its copper skin later turned green."] },
+      { q: "About how many people's bones are in the Catacombs, the tunnels under Paris?", a: "About 6 million", w: ["About 60,000", "About 600,000"],
+        more: ["In the late 1700s, Paris cemeteries were overflowing, so the bones were moved into old underground stone quarries.",
+               "The bones are stacked neatly along the walls, like firewood.",
+               "There are hundreds of kilometers of tunnels under Paris, but only a small part is open to visitors."] },
+    ],
+  },
+  {
+    name: "Inventions & Science", emoji: "💡", color: "#d4a017",
+    questions: [
+      { q: "How old was Louis Braille when he invented his raised-dot reading system for blind people?", a: "15", w: ["30", "50"],
+        more: ["Louis lost his sight at age 3 after an accident in his father's workshop.",
+               "His idea came from a dot code used by the army to read messages in the dark.",
+               "Braille is now used by blind people all over the world."] },
+      { q: "In 1783, who were the first passengers in the Montgolfier brothers' hot air balloon?", a: "A sheep, a duck and a rooster", w: ["Two dogs", "The two brothers"],
+        more: ["The flight took place at Versailles, in front of King Louis XVI and Queen Marie Antoinette.",
+               "The animals flew for about 8 minutes and landed safely.",
+               "Two months later, the first people flew in a hot air balloon over Paris."] },
+      { q: "Nicolas Appert invented a way to keep food fresh for Napoleon's army. What did he use?", a: "Sealed glass bottles heated in boiling water", w: ["Metal tin cans", "Salt and ice"],
+        more: ["Napoleon's government gave him a big prize for his invention in 1810.",
+               "Tin cans came soon after, in England, using Appert's idea.",
+               "The can opener wasn't invented until almost 50 years after the first cans. People used hammers and knives!"] },
+      { q: "When France invented the metric system in the 1790s, the meter was based on the distance from…", a: "The North Pole to the equator", w: ["Paris to Rome", "The Earth to the Moon"],
+        more: ["One meter was set as one ten-millionth of the distance from the North Pole to the equator.",
+               "Before that, towns across France used hundreds of different measurements.",
+               "France also tried a 10-hour clock, but people didn't like it and it was dropped after a few years!"] },
+      { q: "In 1885, Louis Pasteur saved a boy's life with a new vaccine. What was it against?", a: "Rabies", w: ["Chickenpox", "The flu"],
+        more: ["The boy, 9-year-old Joseph Meister, had been bitten by a sick dog.",
+               "Pasteur also showed that heating drinks kills harmful germs. We call this “pasteurization.”",
+               "That's why milk cartons often say “pasteurized”!"] },
+      { q: "Marie Curie, a scientist who worked in Paris, was the first person ever to win…", a: "Two Nobel Prizes", w: ["Three Nobel Prizes", "A Nobel Prize and an Olympic medal"],
+        more: ["She was born in Poland and moved to Paris to study science.",
+               "She discovered two new elements: polonium (named after Poland) and radium.",
+               "Her notebooks are still radioactive today, and are kept in lead-lined boxes!"] },
+      { q: "In 1895 the Lumière brothers held the world's first paid movie show in Paris. What was one of their first films?", a: "Workers leaving a factory", w: ["A trip to the Moon", "A cowboy chase"],
+        more: ["Their films were less than a minute long and had no sound.",
+               "Fun coincidence: “lumière” means “light” in French!",
+               "“A Trip to the Moon” was also French! Georges Méliès made it in 1902."] },
+      { q: "In 1816, a French doctor invented the stethoscope. What was his first one made of?", a: "A rolled-up tube of paper", w: ["A seashell", "A metal trumpet"],
+        more: ["Doctor René Laennec used it to listen to a patient's heart.",
+               "He soon made a better one out of a wooden tube.",
+               "“Stethoscope” comes from Greek words meaning “to look at the chest.”"] },
+      { q: "In 2007 a French TGV set the world speed record for a train on wheels. How fast did it go?", a: "574.8 km/h (357 mph)", w: ["250 km/h (155 mph)", "400 km/h (249 mph)"],
+        more: ["TGV stands for “Train à Grande Vitesse”: high-speed train.",
+               "Normal TGVs carry passengers at up to 320 km/h (200 mph).",
+               "France has banned some short plane trips where a train can get you there in under 2½ hours."] },
+      { q: "About how much of France's electricity comes from nuclear power?", a: "About 70%", w: ["About 10%", "About 35%"],
+        more: ["That's the highest share of any country in the world.",
+               "France has more than 50 nuclear reactors.",
+               "France sells some of its extra electricity to neighboring countries."] },
+    ],
+  },
+  {
+    name: "Places & Records", emoji: "🗼", color: "#2b6fc6",
+    questions: [
+      { q: "Because of its islands and territories around the world, how many time zones does France have?", a: "12", w: ["3", "7"],
+        more: ["That's more than any other country, even Russia or the United States!",
+               "Parts of France are in South America (French Guiana), the Indian Ocean (Réunion) and the Pacific Ocean (Tahiti).",
+               "People in these places are French citizens, just like people in Paris."] },
+      { q: "About how tall is the Eiffel Tower?", a: "About 330 m (1,083 ft)", w: ["About 180 m (590 ft)", "About 500 m (1,640 ft)"],
+        more: ["It was built for a world's fair in 1889 and was only supposed to stay for 20 years. It was saved because it made a great radio antenna.",
+               "In hot weather the iron expands, and the tower grows up to 15 cm (6 inches) taller!",
+               "It is repainted by hand about every 7 years, using about 60 tons of paint."] },
+      { q: "How tall is Mont Blanc, the highest mountain in Western Europe?", a: "About 4,800 m (15,800 ft)", w: ["About 2,500 m (8,200 ft)", "About 8,800 m (29,000 ft)"],
+        more: ["That's taller than Mount Rainier in the USA (about 4,390 m). Mount Everest is about 8,850 m!",
+               "Its exact height changes a little each year depending on the snow and ice on top.",
+               "It sits on the border between France and Italy, and a tunnel almost 12 km long goes right under it."] },
+      { q: "Which city has the most French speakers in the world?", a: "Kinshasa (Democratic Republic of the Congo)", w: ["Paris (France)", "Montréal (Canada)"],
+        more: ["Kinshasa, in Africa, has about 17 million people. The city of Paris has about 2 million.",
+               "More than 300 million people around the world speak French.",
+               "French is spoken on five continents and is an official language in about 29 countries."] },
+      { q: "Which country has the most roundabouts in the world?", a: "France", w: ["England", "The United States"],
+        more: ["France has tens of thousands of roundabouts!",
+               "Many are decorated with gardens, sculptures or even old boats and airplanes.",
+               "The busiest is around the Arc de Triomphe in Paris, where 12 avenues meet."] },
+      { q: "The oldest bridge in Paris is called the Pont Neuf. What does its name mean?", a: "New Bridge", w: ["King's Bridge", "Stone Bridge"],
+        more: ["It opened in 1607. It was “new” back then!",
+               "It was the first bridge in Paris without houses built on top of it, and one of the first with sidewalks.",
+               "Today there are 37 bridges across the River Seine in Paris."] },
+      { q: "About how deep is the Verdon Gorge, one of Europe's biggest canyons?", a: "Up to about 700 m (2,300 ft)", w: ["About 70 m (230 ft)", "About 2,000 m (6,600 ft)"],
+        more: ["Its river is a bright turquoise color because of tiny bits of minerals in the water.",
+               "People kayak, hike and rock climb there.",
+               "For comparison, the Grand Canyon in the USA is about 1,800 m deep in places."] },
+      { q: "About how many tourists visit France every year?", a: "About 100 million", w: ["About 10 million", "About 30 million"],
+        more: ["France is the most visited country in the world!",
+               "That's more visitors than the number of people who live in France (about 68 million).",
+               "The Louvre in Paris is the most visited museum in the world."] },
+      { q: "About how old are the cave paintings of horses and bulls in Lascaux Cave?", a: "About 17,000 years old", w: ["About 2,000 years old", "About 1 million years old"],
+        more: ["The cave was discovered in 1940 by teenagers who were following their dog, Robot!",
+               "It was closed in 1963 to protect the paintings from damage.",
+               "Today visitors can see an exact copy of the cave built nearby."] },
+      { q: "What nickname do French people give their country because of its shape?", a: "L'Hexagone (the Hexagon)", w: ["Le Carré (the Square)", "L'Étoile (the Star)"],
+        more: ["Mainland France has roughly six sides: three coastlines and three land borders.",
+               "The island of Corsica is nicknamed “the Island of Beauty.”",
+               "Can you trace the six sides on a map of France?"] },
+    ],
+  },
+  {
+    name: "Life in France", emoji: "🎒", color: "#2e9e4f",
+    questions: [
+      { q: "When French friends greet each other with kisses on the cheek (“la bise”), how many kisses do they give?", a: "It depends on the region: from 1 to 4", w: ["Always 2", "Always 3"],
+        more: ["It's usually just a light touch of the cheeks with a kissing sound.",
+               "Around Paris it's usually 2, but in some areas it's 3 or even 4!",
+               "People who don't know each other well usually shake hands instead."] },
+      { q: "Which day do many French primary schools have off in the middle of the week?", a: "Wednesday", w: ["Tuesday", "Thursday"],
+        more: ["Many kids spend Wednesday doing sports, music or art clubs.",
+               "The other school days are long, often from about 8:30 am to 4:30 pm.",
+               "Summer vacation, called “les grandes vacances,” lasts about two months."] },
+      { q: "French schools often give grades out of what number?", a: "20", w: ["10", "100"],
+        more: ["10 out of 20 is usually a passing grade.",
+               "Getting 20 out of 20 is very rare, so it's a big deal!",
+               "In France, school is required from age 3, starting with “école maternelle.”"] },
+      { q: "In France, who is said to bring chocolate to children at Easter?", a: "Flying church bells", w: ["The Easter bunny", "A hen"],
+        more: ["The story says church bells fly to Rome before Easter, then fly back and drop chocolate for kids to find.",
+               "Chocolate shops sell chocolate bells, hens, eggs and fish.",
+               "Many families have a big egg hunt in the garden."] },
+      { q: "On April 1 (April Fools' Day), what do French kids secretly stick on people's backs?", a: "A paper fish", w: ["A paper frog", "A “kick me” sign"],
+        more: ["April Fools' Day in France is called “Poisson d'avril,” which means “April fish.”",
+               "Kids try to stick the fish on someone without them noticing.",
+               "When the joke is discovered, everyone shouts “Poisson d'avril!”"] },
+      { q: "About how many English words come from French?", a: "About 30%", w: ["About 5%", "About 1%"],
+        more: ["After French-speaking Normans conquered England in 1066, lots of French words entered English.",
+               "Words like ballet, restaurant, menu, garage and beef all come from French.",
+               "“RSVP” on invitations stands for “Répondez s'il vous plaît”: please reply!"] },
+      { q: "The French word for 80 is “quatre-vingts.” What does it mean word for word?", a: "Four twenties", w: ["Eight tens", "Twenty fours"],
+        more: ["70 is “soixante-dix”: sixty-ten!",
+               "90 is “quatre-vingt-dix”: four-twenties-ten!",
+               "In Belgium and Switzerland, people use simpler words like “septante” (70) and “nonante” (90)."] },
+      { q: "About how far do Tour de France riders cycle in three weeks?", a: "About 3,500 km (2,200 miles)", w: ["About 800 km (500 miles)", "About 10,000 km (6,200 miles)"],
+        more: ["On the hardest mountain days, riders can burn about 7,000 calories, so they eat a LOT.",
+               "The rider in the lead wears a yellow jersey, called the “maillot jaune.”",
+               "The race started in 1903 and usually finishes in Paris on the Champs-Élysées."] },
+      { q: "How many times has France won the men's soccer World Cup?", a: "2", w: ["1", "4"],
+        more: ["France won in 1998 and again in 2018.",
+               "In 2018, Kylian Mbappé scored in the final when he was just 19 years old.",
+               "Paris hosted the Summer Olympics in 2024, exactly 100 years after it last hosted them, in 1924."] },
+      { q: "By law, about how much of the music on French radio must be sung in French?", a: "About 40%", w: ["About 5%", "About 75%"],
+        more: ["The law was made in 1994 to protect French music and the French language.",
+               "Since 1635, a group called the Académie française has been looking after the French language.",
+               "France sometimes creates French words to replace English ones, like “courriel” for email."] },
+    ],
+  },
+  {
+    name: "Weird & Wonderful", emoji: "🤪", color: "#d6457a",
+    questions: [
+      { q: "An old law in Paris said women needed permission from the police to wear…", a: "Pants", w: ["Hats", "Boots"],
+        more: ["The law was made in 1800, more than 200 years ago.",
+               "Nobody followed it for a very long time, but it wasn't officially canceled until 2013!",
+               "Today, of course, women in France wear whatever they like."] },
+      { q: "In case modern technology stops working, the French army still keeps…", a: "Trained carrier pigeons", w: ["Horses for delivering mail", "Signal flags on every hill"],
+        more: ["About 200 pigeons live at Mont-Valérien, a fort near Paris.",
+               "Pigeons carried important messages during World War I and World War II.",
+               "A pigeon named Vaillant (“Brave”) was given a medal for carrying a message during the Battle of Verdun in 1916!"] },
+      { q: "In France, a dog's official name is supposed to start with a letter decided by…", a: "The year it was born", w: ["Its breed", "The first letter of its owner's name"],
+        more: ["For example, dogs registered by breeders in 2025 get names starting with V.",
+               "The system started in 1926, so vets can guess a dog's age from its name!",
+               "The letters K, Q, W, X, Y and Z are skipped because they're too hard to find names for."] },
+      { q: "The famous Michelin restaurant guide was started in 1900 by a company that makes…", a: "Tires", w: ["Cooking pots", "Cars"],
+        more: ["The guide was given away for free to get people to drive more, so they'd wear out their tires and buy new ones!",
+               "Today, earning a “Michelin star” is one of the highest honors a restaurant can get.",
+               "The Michelin Man, called Bibendum, is made of tires."] },
+      { q: "In 1893, France was the first country in the world to…", a: "Put license plates on vehicles", w: ["Build traffic lights", "Paint lines on roads"],
+        more: ["Paris was getting its first cars, and police wanted to know who owned them.",
+               "Soon many other countries copied the idea.",
+               "Today, French plates have a blue strip with “F” for France."] },
+      { q: "Why do old French churches like Notre-Dame have stone monsters called gargoyles?", a: "They spout rainwater away from the walls", w: ["To scare away pigeons", "To hold up the roof"],
+        more: ["The word “gargoyle” comes from an old French word for throat, like “gargle”!",
+               "The water pours out of their open mouths.",
+               "Notre-Dame burned in 2019 and reopened in 2024 after five years of repairs."] },
+      { q: "McDonald's in France has sold a burger served on…", a: "A baguette", w: ["A croissant", "A crêpe"],
+        more: ["It was called the McBaguette!",
+               "In France, McDonald's is nicknamed “McDo.”",
+               "French McDonald's also sell macarons."] },
+      { q: "Boudin noir, a traditional French sausage, is made mostly from…", a: "Pig's blood", w: ["Squid ink", "Black beans"],
+        more: ["It's often served with cooked apples.",
+               "Many countries have blood sausages: in England it's black pudding, and in Spain it's morcilla.",
+               "It's dark because of the blood, which is why it's called “noir” (black)."] },
+      { q: "There's a village in northern France whose name is just one letter. Which letter?", a: "Y", w: ["O", "A"],
+        more: ["The village of Y is in the Somme area of northern France.",
+               "It has one of the shortest place names in the world.",
+               "Some French villages have very long names, like Saint-Remy-en-Bouzemont-Saint-Genest-et-Isson!"] },
+      { q: "Which of these video game companies is French?", a: "Ubisoft", w: ["Nintendo", "Mojang (Minecraft)"],
+        more: ["Ubisoft makes Just Dance, Assassin's Creed, Rayman and the Rabbids.",
+               "Nintendo is from Japan, and Mojang, the maker of Minecraft, is from Sweden.",
+               "One Assassin's Creed game is set in Paris during the French Revolution."] },
+    ],
+  },
+];
+
+const IDLE_HOME_MS = 180000; // go back to the topic screen after 3 minutes untouched
+
+const $ = id => document.getElementById(id);
+let cat = null, qi = 0, idleTimer = null;
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+  $(id).scrollTop = 0;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function goHome() { show("home"); }
+
+function openCategory(c) {
+  cat = c; qi = 0;
+  document.body.style.setProperty("--c", c.color);
+  $("cat-name").textContent = `${c.emoji} ${c.name}`;
+  show("quiz");
+  showQuestion();
+}
+
+function showQuestion() {
+  const item = cat.questions[qi];
+  $("count").textContent = `${qi + 1} / ${cat.questions.length}`;
+  $("dots").innerHTML = cat.questions.map((_, i) =>
+    `<span class="${i < qi ? "done" : i === qi ? "now" : ""}"></span>`).join("");
+  $("question").textContent = item.q;
+  $("card").classList.remove("answered");
+  const answers = $("answers");
+  answers.classList.remove("locked");
+  answers.innerHTML = "";
+  shuffle([item.a, ...item.w]).forEach(text => {
+    const b = document.createElement("button");
+    b.className = "ans";
+    b.textContent = text;
+    b.onclick = () => choose(b, text === item.a);
+    answers.appendChild(b);
+  });
+}
+
+function choose(btn, isRight) {
+  const answers = $("answers");
+  if (answers.classList.contains("locked")) return;
+  answers.classList.add("locked");
+  const item = cat.questions[qi];
+  [...answers.children].forEach(b => {
+    if (b.textContent === item.a) b.classList.add("right");
+    else if (b === btn) b.classList.add("wrong");
+    else b.classList.add("faded");
+  });
+  $("verdict").textContent = isRight ? "✅ Yes! That's right!" : `Good guess! The answer is: ${item.a}`;
+  $("more").innerHTML = item.more.map(m => `<li>${m}</li>`).join("");
+  $("next").textContent = qi === cat.questions.length - 1 ? "Finish 🎉" : "Next question →";
+  $("card").classList.add("answered");
+}
+
+function next() {
+  if (qi < cat.questions.length - 1) { qi++; showQuestion(); return; }
+  $("done-emoji").textContent = cat.emoji;
+  $("done-text").textContent = `You explored all ${cat.questions.length} questions about ${cat.name}!`;
+  show("done");
+}
+
+// Build the topic buttons (clear first, in case the page was saved "as displayed")
+$("cats").innerHTML = "";
+$("answers").innerHTML = "";
+document.body.removeAttribute("style");
+CATEGORIES.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "cat";
+  b.style.background = c.color;
+  b.innerHTML = `<span class="emoji">${c.emoji}</span>${c.name}`;
+  b.onclick = () => openCategory(c);
+  $("cats").appendChild(b);
+});
+
+$("back").onclick = goHome;
+$("next").onclick = next;
+$("done-btn").onclick = goHome;
+
+// Return to the topic screen if the table is left alone
+function resetIdle() { clearTimeout(idleTimer); idleTimer = setTimeout(goHome, IDLE_HOME_MS); }
+["pointerdown", "keydown"].forEach(ev => document.addEventListener(ev, resetIdle));
+resetIdle();
+goHome();
+</script>
+
+
+<div id="amazon-quick-browser-extension-fab" style="all: initial;"><template shadowrootmode="closed"><div style="bottom: 100px; right: 15px; width: 40px; height: 40px; position: fixed; z-index: 2147483647; cursor: pointer; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px; display: flex; align-items: stretch; justify-content: stretch;"><button data-testid="amazon-quick-browser-extension-fab-button" aria-label="Open Amazon Quick browser extension" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: none; padding: 0px; margin: 0px; outline: none; cursor: pointer;"><img src="chrome-extension://innkphffipcmiflfibbeghfnkifiokgo/quick-logo.svg" style="width: 100%; height: 100%;"></button><button data-testid="amazon-quick-browser-extension-fab-close-button" aria-label="Remove Amazon Quick button" aria-live="polite" style="padding: 0px; margin: 0px; outline: none; cursor: pointer; position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; background-color: white; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; visibility: hidden; border: 1px solid black; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px;">x</button></div></template></div></body></html>

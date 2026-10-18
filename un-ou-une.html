@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<!-- saved from url=(0070)https://ds-pqj2bnep-%2D8080.us-west-2.prod.proxy.devspaces.amazon.dev/ -->
+<html lang="en"><script src="chrome-extension://bkbighdlgofgdhcjnhocalbkiehhpdei/sentryjs-api-injected.js" id="sentryjs-api-injected"></script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Un ou Une?</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fff; color: #222;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; transition: background-color .25s;
+    user-select: none;
+  }
+  body.right { background: #b8f2c4; }
+  body.wrong { background: #ffb3b3; }
+  .screen { display: none; flex-direction: column; align-items: center; gap: 24px; padding: 20px; }
+  .screen.active { display: flex; }
+
+  .flag { display: flex; width: 90px; height: 60px; border: 1px solid #ccc; }
+  .flag div { flex: 1; }
+
+  h1 { font-size: 56px; margin: 0; }
+  .best { font-size: 28px; color: #555; }
+  .best b { color: #222; }
+
+  button {
+    font: inherit; font-weight: 700; cursor: pointer; border: none;
+    border-radius: 16px; color: #fff;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  #start-btn, #home-btn { font-size: 48px; padding: 24px 80px; background: #0055A4; }
+
+  .streak { font-size: 22px; color: #666; }
+  .pic { font-size: 160px; line-height: 1; }
+  .word { font-size: 56px; font-weight: 700; }
+  .question { font-size: 26px; color: #444; }
+  .choices { display: flex; gap: 24px; }
+  .choices button { font-size: 36px; padding: 20px 40px; min-width: 220px; }
+  #male-btn { background: #0055A4; }
+  #female-btn { background: #EF4135; }
+  .answer { font-size: 64px; font-weight: 800; min-height: 80px; }
+  .answer .article { text-decoration: underline; }
+
+  .score-big { font-size: 40px; }
+</style>
+<script id="fortidlp-file-access-api" src="chrome-extension://gbojkjpincgojijodbnliimgeggnomai/upload_fileaccessapi.js"></script><script id="fortidlp-input-element-creation" src="chrome-extension://gbojkjpincgojijodbnliimgeggnomai/upload_element_creation.js"></script></head>
+<body class="">
+
+<!-- START -->
+<div id="start" class="screen active">
+  <div class="flag"><div style="background:#0055A4"></div><div style="background:#fff"></div><div style="background:#EF4135"></div></div>
+  <h1>Un ou Une?</h1>
+  <div class="question">Guess if French words are male or female!</div>
+  <div class="best">Current highest streak: <b id="best-start">130</b></div>
+  <button id="start-btn">START</button>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="streak">Streak: <b id="streak">0</b></div>
+  <div class="pic" id="pic"></div>
+  <div class="word" id="word"></div>
+  <div class="question">Is this word male or female in French?</div>
+  <div class="choices">
+    <button id="male-btn">Male</button>
+    <button id="female-btn">Female</button>
+  </div>
+  <div class="answer" id="answer"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="over" class="screen">
+  <div class="flag"><div style="background:#0055A4"></div><div style="background:#fff"></div><div style="background:#EF4135"></div></div>
+  <h1 id="over-title">Bravo!</h1>
+  <div class="score-big">Your streak: <b id="final">0</b></div>
+  <div class="best">Highest streak: <b id="best-over">0</b></div>
+  <button id="home-btn">Back to Start</button>
+</div>
+
+<script>
+// [emoji, English, French, gender]  m = un, f = une
+const WORDS = [
+  ["🐱","Cat","chat","m"], ["🐶","Dog","chien","m"], ["🍎","Apple","pomme","f"],
+  ["🍌","Banana","banane","f"], ["📖","Book","livre","m"], ["🚗","Car","voiture","f"],
+  ["🏠","House","maison","f"], ["🌳","Tree","arbre","m"], ["🌸","Flower","fleur","f"],
+  ["🐟","Fish","poisson","m"], ["🐦","Bird","oiseau","m"], ["⭐","Star","étoile","f"],
+  ["🎂","Cake","gâteau","m"], ["🍕","Pizza","pizza","f"], ["🧀","Cheese","fromage","m"],
+  ["🍓","Strawberry","fraise","f"], ["⚽","Ball","ballon","m"], ["🪑","Chair","chaise","f"],
+  ["✏️","Pencil","crayon","m"], ["🚲","Bike","vélo","m"], ["✈️","Airplane","avion","m"],
+  ["⛵","Boat","bateau","m"], ["🐢","Turtle","tortue","f"], ["🐰","Rabbit","lapin","m"],
+  ["🐄","Cow","vache","f"], ["🐴","Horse","cheval","m"], ["🐭","Mouse","souris","f"],
+  ["🎩","Hat","chapeau","m"], ["👟","Shoe","chaussure","f"], ["☂️","Umbrella","parapluie","m"],
+  ["🍦","Ice cream","glace","f"], ["🥕","Carrot","carotte","f"], ["🥐","Croissant","croissant","m"],
+  ["🥖","Baguette","baguette","f"], ["📱","Phone","téléphone","m"], ["🔑","Key","clé","f"],
+  ["🎁","Present","cadeau","m"], ["🎸","Guitar","guitare","f"], ["🎹","Piano","piano","m"],
+  ["🐸","Frog","grenouille","f"], ["🐍","Snake","serpent","m"], ["🐝","Bee","abeille","f"],
+  ["🦋","Butterfly","papillon","m"], ["🚚","Truck","camion","m"], ["🔔","Bell","cloche","f"],
+  ["🍊","Orange","orange","f"], ["🍋","Lemon","citron","m"], ["⛰️","Mountain","montagne","f"],
+  ["☁️","Cloud","nuage","m"], ["👕","Shirt","chemise","f"], ["🛏️","Bed","lit","m"],
+  ["🚪","Door","porte","f"], ["🐌","Snail","escargot","m"], ["🌙","Moon","lune","f"],
+  ["☀️","Sun","soleil","m"], ["🕷️","Spider","araignée","f"],
+  ["🐘","Elephant","éléphant","m"], ["🦁","Lion","lion","m"], ["🐻","Bear","ours","m"],
+  ["🐷","Pig","cochon","m"], ["🦆","Duck","canard","m"], ["🚂","Train","train","m"],
+  ["🏰","Castle","château","m"], ["🦈","Shark","requin","m"], ["🥚","Egg","œuf","m"],
+  ["🌈","Rainbow","arc-en-ciel","m"], ["🦒","Giraffe","girafe","f"], ["🐔","Chicken","poule","f"],
+  ["🍐","Pear","poire","f"], ["🍒","Cherry","cerise","f"], ["🧦","Sock","chaussette","f"],
+  ["👗","Dress","robe","f"], ["🚀","Rocket","fusée","f"], ["🍴","Fork","fourchette","f"],
+  ["🐳","Whale","baleine","f"],
+];
+
+const RIGHT_DELAY = 1500;  // ms before next word after a correct answer
+const WRONG_DELAY = 2500;  // ms showing the correct answer before game over
+
+const $ = id => document.getElementById(id);
+let deck = [], current = null, streak = 0;
+
+const getBest = () => parseInt(localStorage.getItem("unUneBest") || "0", 10);
+const setBest = n => localStorage.setItem("unUneBest", String(n));
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $(id).classList.add("active");
+  document.body.className = "";
+}
+
+function goHome() {
+  $("best-start").textContent = getBest();
+  show("start");
+}
+
+function startGame() {
+  streak = 0;
+  deck = [];
+  show("game");
+  nextWord();
+}
+
+function nextWord() {
+  if (deck.length === 0) deck = [...WORDS].sort(() => Math.random() - 0.5);
+  current = deck.pop();
+  document.body.className = "";
+  $("pic").textContent = current[0];
+  $("word").textContent = current[1];
+  $("answer").innerHTML = "";
+  $("streak").textContent = streak;
+  $("male-btn").disabled = $("female-btn").disabled = false;
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "fr-FR";
+  u.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function guess(g) {
+  $("male-btn").disabled = $("female-btn").disabled = true;
+  const [, , fr, gender] = current;
+  const article = gender === "m" ? "un" : "une";
+  $("answer").innerHTML = `<span class="article">${article}</span> ${fr}`;
+  speak(`${article} ${fr}`);
+
+  if (g === gender) {
+    streak++;
+    $("streak").textContent = streak;
+    document.body.className = "right";
+    setTimeout(nextWord, RIGHT_DELAY);
+  } else {
+    document.body.className = "wrong";
+    setTimeout(gameOver, WRONG_DELAY);
+  }
+}
+
+function gameOver() {
+  const best = getBest();
+  const newRecord = streak > best;
+  if (newRecord) setBest(streak);
+  $("over-title").textContent = newRecord ? "New record! 🎉" : "Bravo!";
+  $("final").textContent = streak;
+  $("best-over").textContent = getBest();
+  show("over");
+}
+
+$("start-btn").onclick = startGame;
+$("home-btn").onclick = goHome;
+$("male-btn").onclick = () => guess("m");
+$("female-btn").onclick = () => guess("f");
+
+// Hidden reset for the table host: press Shift+R on the start screen
+document.addEventListener("keydown", e => {
+  if (e.key === "R" && e.shiftKey && $("start").classList.contains("active")
+      && confirm("Reset the highest streak to 0?")) {
+    setBest(0);
+    goHome();
+  }
+});
+
+goHome();
+</script>
+
+
+<div id="amazon-quick-browser-extension-fab" style="all: initial;"><template shadowrootmode="closed"><div style="bottom: 100px; right: 15px; width: 40px; height: 40px; position: fixed; z-index: 2147483647; cursor: pointer; border-radius: 5px; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px; display: flex; align-items: stretch; justify-content: stretch;"><button data-testid="amazon-quick-browser-extension-fab-button" aria-label="Open Amazon Quick browser extension" style="border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: none; padding: 0px; margin: 0px; outline: none; cursor: pointer;"><img src="chrome-extension://innkphffipcmiflfibbeghfnkifiokgo/quick-logo.svg" style="width: 100%; height: 100%;"></button><button data-testid="amazon-quick-browser-extension-fab-close-button" aria-label="Remove Amazon Quick button" aria-live="polite" style="padding: 0px; margin: 0px; outline: none; cursor: pointer; position: absolute; top: -12px; right: -12px; width: 24px; height: 24px; background-color: white; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; visibility: hidden; border: 1px solid black; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px;">x</button></div></template></div></body></html>
